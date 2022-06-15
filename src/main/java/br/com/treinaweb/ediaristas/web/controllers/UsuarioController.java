@@ -1,5 +1,7 @@
 package br.com.treinaweb.ediaristas.web.controllers;
 
+import java.security.Principal;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import br.com.treinaweb.ediaristas.core.exceptions.ValidacaoException;
+import br.com.treinaweb.ediaristas.web.dtos.AlterarSenhaForm;
 import br.com.treinaweb.ediaristas.web.dtos.FlashMessage;
 import br.com.treinaweb.ediaristas.web.dtos.UsuarioCadastroForm;
+import br.com.treinaweb.ediaristas.web.dtos.UsuarioEdicaoForm;
 import br.com.treinaweb.ediaristas.web.services.WebUsuarioService;
 
 @Controller
@@ -44,7 +49,7 @@ public class UsuarioController {
 
     @PostMapping("/cadastrar")
     public String cadastrar(
-        @Valid @ModelAttribute("cadastrarForm") UsuarioCadastroForm cadastroForm,
+        @Valid @ModelAttribute("cadastroForm") UsuarioCadastroForm cadastroForm,
          BindingResult result, 
          RedirectAttributes attrs
     ) {
@@ -52,11 +57,48 @@ public class UsuarioController {
             return "admin/usuario/cadastro-form";
         }
 
-        service.cadastrar(cadastroForm);
-        attrs.addFlashAttribute("alert", new FlashMessage("alert-success", "Usuário cadastrado com sucesso!"));
+        try {
+            service.cadastrar(cadastroForm);
+            attrs.addFlashAttribute("alert", new FlashMessage("alert-success", "Usuário cadastrado com sucesso!"));
+        } catch (ValidacaoException e) {
+            result.addError(e.getFieldError());
+            return "admin/usuario/cadastro-form";
+        }
 
+        
         return "redirect:/admin/usuarios";
+    }
 
+    @GetMapping("/{id}/editar")
+    public ModelAndView editar(@PathVariable Long id) {
+        var modelAndView = new ModelAndView("admin/usuario/edicao-form");
+
+        modelAndView.addObject("edicaoForm", service.buscarFormPorId(id));
+
+        return modelAndView;
+    }
+
+    @PostMapping("/{id}/editar")
+    public String editar(
+        @PathVariable Long id, 
+        @Valid @ModelAttribute("edicaoForm") UsuarioEdicaoForm edicaoForm, 
+        BindingResult result, 
+        RedirectAttributes attrs
+        ) {
+        
+            if (result.hasErrors()) {
+                return "admin/usuario/edicao-form";
+            }
+     
+            try {
+                service.editar(edicaoForm, id);
+                attrs.addFlashAttribute("alert", new FlashMessage("alert-success", "Usuário editado com sucesso!"));
+            } catch (ValidacaoException e) {
+                result.addError(e.getFieldError());
+                return "admin/usuario/edicao-form";
+            }
+
+            return "redirect:/admin/usuarios";
     }
 
     @GetMapping("/{id}/excluir")
@@ -66,6 +108,37 @@ public class UsuarioController {
 
         return "redirect:/admin/usuarios";
 
+    }
+
+    @GetMapping("/alterar-senha")
+    public ModelAndView alterarSenha() {
+        var modelAndView = new ModelAndView("admin/usuario/alterar-senha");
+
+        modelAndView.addObject("alterarSenhaform", new AlterarSenhaForm());
+
+        return modelAndView;
+    }
+
+    @PostMapping("/alterar-senha")
+    public String alterarSenha(
+        @Valid @ModelAttribute("alterarSenhaForm") AlterarSenhaForm alterarSenhaForm,
+         BindingResult result,
+         RedirectAttributes atts,
+         Principal principal
+    ) {
+        if (result.hasErrors()) {
+            return "admin/usuarios/alterar-senha";
+        }
+
+        try {
+            service.alterarSenha(alterarSenhaForm, principal.getName());
+            atts.addFlashAttribute("alert", new FlashMessage("alert-success", "Senha alterada com sucesso"));
+        } catch (ValidacaoException e) {
+            result.addError(e.getFieldError());
+            return "admin/usuario/alterar-senha";
+        }
+
+        return "redirect:/admin/usuarios/alterar-senha";
     }
     
 }

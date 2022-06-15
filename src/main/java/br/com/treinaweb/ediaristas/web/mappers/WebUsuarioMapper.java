@@ -16,5 +16,5 @@ public interface WebUsuarioMapper {
 
     Usuario toModel(UsuarioEdicaoForm form);
 
-    UsuarioEdicaoForm toform(Usuario model);
+    UsuarioEdicaoForm toForm(Usuario model);
 }
