@@ -114,7 +114,7 @@ public class UsuarioController {
     public ModelAndView alterarSenha() {
         var modelAndView = new ModelAndView("admin/usuario/alterar-senha");
 
-        modelAndView.addObject("alterarSenhaform", new AlterarSenhaForm());
+        modelAndView.addObject("alterarSenhaForm", new AlterarSenhaForm());
 
         return modelAndView;
     }
